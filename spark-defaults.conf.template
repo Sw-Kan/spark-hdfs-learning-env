@@ -1,0 +1,3 @@
+spark.master                     spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
+spark.driver.memory              ${SPARK_DRIVER_MEMORY}
+spark.executor.memory            ${SPARK_EXECUTOR_MEMORY}

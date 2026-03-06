@@ -1,0 +1,28 @@
+FROM ubuntu-base
+
+# --- Install Hadoop ---
+ARG HADOOP_VERSION=3.4.0
+ENV HADOOP_VERSION=${HADOOP_VERSION}
+ENV HADOOP_HOME=/usr/local/hadoop
+ENV HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+ENV PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
+
+COPY hadoop-${HADOOP_VERSION}.tar.gz /tmp
+RUN mkdir -p ${HADOOP_HOME} && \
+    tar -xzf /tmp/hadoop-${HADOOP_VERSION}.tar.gz -C ${HADOOP_HOME} --strip-components=1 && \
+    rm /tmp/hadoop-${HADOOP_VERSION}.tar.gz
+
+# Copy configuration templates and scripts
+# We assume these files exist in your build directory
+COPY core-site.xml.template ${HADOOP_CONF_DIR}/core-site.xml.template
+COPY hdfs-site.xml.template ${HADOOP_CONF_DIR}/hdfs-site.xml.template
+COPY entrypoint-hdfs.sh /usr/local/bin/entrypoint-hdfs.sh
+
+RUN chmod +x /usr/local/bin/entrypoint-hdfs.sh
+
+# Set Hadoop-specific env vars for the shell
+ENV HDFS_NAMENODE_USER=root
+ENV HDFS_DATANODE_USER=root
+ENV HDFS_SECONDARYNAMENODE_USER=root
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-hdfs.sh"]

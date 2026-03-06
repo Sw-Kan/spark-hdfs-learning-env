@@ -1,0 +1,80 @@
+services:
+  hadoop-namenode:
+    image: myhadoop
+    container_name: hadoop-namenode
+    hostname: hadoop-namenode
+    networks:
+      - spark-net
+    environment:
+      - NODE_TYPE=namenode
+      - NAMENODE_HOST=hadoop-namenode
+      - HDFS_REPLICATION_FACTOR=1
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+    ports:
+      - "19870:9870" # HDFS Web UI
+      - "19000:9000" # RPC Port
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hadoop-datanode:
+    image: myhadoop
+    container_name: hadoop-datanode
+    environment:
+      - NODE_TYPE=datanode
+      - NAMENODE_HOST=hadoop-namenode
+      - HDFS_REPLICATION_FACTOR=1
+    volumes:
+      - datanode_data:/hadoop/dfs/data
+    networks:
+      - spark-net
+    depends_on:
+      hadoop-namenode:
+        condition: service_healthy
+
+  spark-master:
+    image: myspark
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_MASTER_WEBUI_PORT=8080
+    ports:
+      - "18080:8080"
+      - "17077:7077"
+    networks:
+      - spark-net
+    depends_on:
+      hadoop-namenode:
+        condition: service_healthy  
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master --port 7077
+  spark-worker:  
+    image: myspark
+    container_name: spark-worker
+    hostname: spark-worker
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKER_WEBUI_PORT=8081
+    networks:
+      - spark-net
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+networks:
+  spark-net:
+    driver: bridge
+
+volumes:
+  namenode_data:
+  datanode_data:
