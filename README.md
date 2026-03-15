@@ -1,4 +1,7 @@
 一个用于自己学习大数据开放而配置的hdfs+spark的docker-compose环境。
-目前只有hdfs-namenode, hdfs-datanode, spark-master, spark-worker四个service。暂未配置yarn，mapreduce等。
 
+
+目前只有hdfs-namenode, hdfs-datanode, spark-master, spark-worker四个service。暂未配置yarn，mapreduce等。
 hadoop3.4, java11.0.3, spark3.5.8
+
+3-15 补充了clickhouse service
